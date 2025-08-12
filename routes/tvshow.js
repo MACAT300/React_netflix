@@ -2,32 +2,20 @@ const express = require("express");
 //create a express router
 const router = express.Router();
 
-// import the Movie model
-const Tvshow = require("../models/tvshow");
+const {
+  getTvshows,
+  getTvshow,
+  addTvshow,
+  updateTvshow,
+  deleteTvshow,
+} = require("../controllers/tvshow");
 
 router.get("/", async (req, res) => {
   const premiere_year = req.query.premiere_year;
   const genre = req.query.genre;
   const rating = req.query.rating;
-
-  // create a empty container for filter
-  let filter = {};
-  // if premiere_year exists, then only add it into the filter container
-  if (premiere_year) {
-    filter.premiere_year = { $gt: premiere_year };
-  }
-  // if genre exists, then only add it into the filter container
-  if (genre) {
-    filter.genre = genre;
-  }
-  // if rating exists, then only add it into the filter container
-  if (rating) {
-    filter.rating = { $gt: rating };
-  }
-
-  // load the shows data from Mongodb
-  const shows = await Tvshow.find(filter);
-  res.send(shows);
+  const shows = await getTvshows(premiere_year, genre, rating);
+  res.status(200).send(shows);
 });
 
 // GEt
@@ -35,8 +23,8 @@ router.get("/:id", async (req, res) => {
   // retrieve id from params
   const id = req.params.id;
   // load the show data based on id
-  const show = await Tvshow.findById(id);
-  res.send(show);
+  const show = await getTvshow.findById(id);
+  res.status(200).send(show);
 });
 
 // Post
@@ -55,20 +43,11 @@ router.post("/", async (req, res) => {
         message: "All the fields are required",
       });
     }
-
-    // create new tvshow
-    const newTvshow = new Tvshow({
-      title: title,
-      creator: creator,
-      premiere_year: premiere_year,
-      seasons: seasons,
-      genre: genre,
-      rating: rating,
-    });
-
-    await newTvshow.save(); // clicking the "save" button
-
-    res.status(200).send(newTvshow);
+    res
+      .status(200)
+      .send(
+        await addTvshow(title, creator, premiere_year, seasons, genre, rating)
+      );
   } catch (error) {
     res.status(400).send({ message: "Unknown error" });
   }
@@ -91,25 +70,20 @@ router.put("/:id", async (req, res) => {
         message: "All the fields are required",
       });
     }
-
-    const updatedTvShow = await Tvshow.findByIdAndUpdate(
-      id,
-      {
-        title: title,
-        creator: creator,
-        premiere_year: premiere_year,
-        seasons: seasons,
-        genre: genre,
-        rating: rating,
-      },
-      {
-        new: true, // return the updated data
-      }
-    );
-    console.log(updatedTvShow);
-    res.status(200).send(updatedTvShow);
+    res
+      .status(200)
+      .send(
+        await updateTvshow(
+          id,
+          title,
+          creator,
+          premiere_year,
+          seasons,
+          genre,
+          rating
+        )
+      );
   } catch (error) {
-    console.log(error);
     res.status(400).send({ message: "Unknown error" });
   }
 });
@@ -118,7 +92,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const deletedTvshow = await Tvshow.findByIdAndDelete(id);
+    await deleteTvshow(id);
     res.status(200).send({
       message: `Tvshow with the ID of ${id} has been deleted`,
     });
