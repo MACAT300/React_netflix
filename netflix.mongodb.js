@@ -1,8 +1,8 @@
 use("netflix");
 
-db.createCollection("tvs");
+db.createCollection("tvshows");
 
-db.tvs.insertMany([
+db.tvshows.insertMany([
   {
     title: "Breaking Bad",
     creator: "Vince Gilligan",
